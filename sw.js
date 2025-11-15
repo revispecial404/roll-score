@@ -1,72 +1,66 @@
-// Minimaler Service Worker - notwendig für die PWA-Installierbarkeit.
-// Kann später erweitert werden, z.B. für Offline-Caching.
-
-const CACHE_NAME = 'rollscore-cache-v1';
-const URLS_TO_CACHE = [
-  '/', // Wichtig, um die Startseite zu cachen
-  '/index.html', // Explizit die HTML-Datei
-  // Füge hier Pfade zu CSS, JS (falls ausgelagert), Icons hinzu, wenn du Offline-Fähigkeit möchtest
-  // z.B. '/styles.css', '/script.js', '/icons/icon-192x192.png'
+const CACHE_NAME = 'rollscore-cache-v2';
+const APP_SHELL = [
+  './',
+  'index.html',
+  'offline.html',
+  'styles/main.css',
+  'scripts/app.js',
+  'manifest.json',
+  'icons/icon-192x192.png',
+  'icons/icon-512x512.png'
 ];
 
-// Installation: Öffnet den Cache und fügt die Basis-Assets hinzu
-self.addEventListener('install', event => {
-  console.log('Service Worker: Installiert');
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Cache geöffnet');
-        return cache.addAll(URLS_TO_CACHE);
-      })
-      .catch(err => {
-         console.error('Service Worker: Fehler beim Cachen während der Installation:', err);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
 });
 
-// Aktivierung: Bereinigt alte Caches (optional, gut für Updates)
-self.addEventListener('activate', event => {
-  console.log('Service Worker: Aktiviert');
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Alter Cache wird gelöscht:', cache);
-            return caches.delete(cache);
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
+          return null;
         })
-      );
-    })
+      )
+    )
   );
-  return self.clients.claim(); // Kontrolliert sofort offene Clients
+  self.clients.claim();
 });
 
-// Fetch: Fängt Netzwerkanfragen ab (Cache-First Strategie)
-self.addEventListener('fetch', event => {
-  // Nur GET-Anfragen behandeln
+self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
   }
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => response)
+        .catch(
+          async () =>
+            (await caches.match(event.request)) || (await caches.match('index.html')) || caches.match('offline.html')
+        )
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request) // Prüft, ob die Anfrage im Cache ist
-      .then(response => {
-        if (response) {
-          //console.log('Service Worker: Aus Cache geladen:', event.request.url);
-          return response; // Aus Cache zurückgeben
-        }
-        //console.log('Service Worker: Vom Netzwerk geladen:', event.request.url);
-        return fetch(event.request) // Nicht im Cache -> Vom Netzwerk holen
-                 .then(networkResponse => {
-                    // Optional: Hier könnte man die Antwort auch dynamisch zum Cache hinzufügen
-                    return networkResponse;
-                 })
-                 .catch(error => {
-                    console.error('Service Worker: Fehler beim Fetchen:', error);
-                    // Optional: Hier könnte eine Offline-Fallback-Seite zurückgegeben werden
-                 });
-      })
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request)
+        .then((networkResponse) => {
+          const cloned = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cloned));
+          return networkResponse;
+        })
+        .catch(() => undefined);
+    })
   );
 });
-
