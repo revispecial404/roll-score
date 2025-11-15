@@ -1,24 +1,23 @@
 {
-    "name": "Roll & Score",
-    "short_name": "Roll & Score",
-    "description": "Roll & Score (Progressive Web App)",
-    "start_url": "https://revispecial404.github.io/roll-score/index.html", // Oder einfach "/" wenn der Server das richtig mapt
-    "display": "standalone", // Öffnet wie eine native App
-    "background_color": "#FEFBFF", // Passend zum CSS Background
-    "theme_color": "#0B57D0",    // Passend zur CSS Primary Color
-    "icons": [
-      {
-        "src": "icons/icon-192x192.png", // Pfad zu deinem Icon (ersetzen!)
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable" // "maskable" hilft bei adaptiven Icons
-      },
-      {
-        "src": "icons/icon-512x512.png", // Pfad zu deinem Icon (ersetzen!)
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "any maskable"
-      }
-    ]
-  }
-  
+  "name": "Roll & Score",
+  "short_name": "Roll & Score",
+  "description": "Roll & Score (Progressive Web App)",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FEFBFF",
+  "theme_color": "#0B57D0",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
